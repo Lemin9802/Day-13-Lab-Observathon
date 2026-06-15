@@ -2,41 +2,16 @@
   "team": "Lemin9802",
   "schema_version": 1,
   "findings": [
-    {
-      "fault_class": "latency_spike",
-      "evidence": {"metric": "latency_ms and wall_ms P95", "observed": "high step budget, loop guard off, no cache", "trace_ids": []},
-      "root_cause": "Too many agent steps and repeated calls make the long tail slow.",
-      "suggested_fix": "Use lower max_steps, loop_guard, tool_budget and cache."
-    },
-    {
-      "fault_class": "cost_blowup",
-      "evidence": {"metric": "prompt_tokens, completion_tokens, total_tokens, cost_usd", "observed": "verbose_system true, large context, large completion cap", "trace_ids": []},
-      "root_cause": "Original config spends extra tokens on context and long answers.",
-      "suggested_fix": "Use compact prompt, smaller context, shorter completion cap and cache."
-    },
-    {
-      "fault_class": "pii_leak",
-      "evidence": {"metric": "PII matches in answer text", "observed": "redaction was disabled in baseline", "trace_ids": []},
-      "root_cause": "The answer can repeat user contact details.",
-      "suggested_fix": "Enable redact_pii and redact answer text in wrapper."
-    },
-    {
-      "fault_class": "arithmetic_error",
-      "evidence": {"metric": "recomputed total compared with final answer line", "observed": "baseline temperature high and formula absent", "trace_ids": []},
-      "root_cause": "The model may estimate instead of computing exactly.",
-      "suggested_fix": "Lower temperature, enable verify and specify the formula in prompt."
-    },
-    {
-      "fault_class": "tool_overuse",
-      "evidence": {"metric": "tool_count and repeated_actions", "observed": "no tool budget in baseline", "trace_ids": []},
-      "root_cause": "The agent can call the same tool more than needed.",
-      "suggested_fix": "Set tool_budget and require each tool at most once."
-    },
-    {
-      "fault_class": "fabrication",
-      "evidence": {"metric": "total produced when product data is unavailable", "observed": "baseline prompt asks for a total without grounding", "trace_ids": []},
-      "root_cause": "The model may produce a total without valid tool data.",
-      "suggested_fix": "Require tool-grounded answers and no total when unavailable."
-    }
+    {"fault_class": "error_spike", "evidence": {"metric": "non-ok status rate and tool error count", "observed": "retry was disabled and tool failures were possible", "trace_ids": []}, "root_cause": "Transient tool failures are not retried.", "suggested_fix": "Enable retry with short backoff and log every failed attempt."},
+    {"fault_class": "latency_spike", "evidence": {"metric": "latency_ms and wall_ms P95", "observed": "high step budget, loop guard off, no cache", "trace_ids": []}, "root_cause": "Too many agent steps and repeated calls make the long tail slow.", "suggested_fix": "Use lower max_steps, loop_guard, tool_budget and cache."},
+    {"fault_class": "cost_blowup", "evidence": {"metric": "prompt_tokens, completion_tokens, total_tokens, cost_usd", "observed": "verbose_system true, large context, large completion cap", "trace_ids": []}, "root_cause": "Original config spends extra tokens on context and long answers.", "suggested_fix": "Use compact prompt, smaller context, shorter completion cap and cache."},
+    {"fault_class": "quality_drift", "evidence": {"metric": "answer quality by turn_index", "observed": "session drift was enabled and context was never reset", "trace_ids": []}, "root_cause": "Later turns can inherit noisy session state.", "suggested_fix": "Reduce drift, reset context periodically and keep generation deterministic."},
+    {"fault_class": "infinite_loop", "evidence": {"metric": "repeated_actions and status=max_steps", "observed": "loop guard was off", "trace_ids": []}, "root_cause": "The same action can be repeated when the model is uncertain.", "suggested_fix": "Enable loop_guard and cap tool calls."},
+    {"fault_class": "tool_failure", "evidence": {"metric": "failed tool observations and normalization misses", "observed": "unicode normalization was disabled and catalog override was present", "trace_ids": []}, "root_cause": "Input normalization and catalog config can make tool data wrong.", "suggested_fix": "Enable normalization and clear catalog_override."},
+    {"fault_class": "pii_leak", "evidence": {"metric": "PII matches in answer text", "observed": "redaction was disabled in baseline", "trace_ids": []}, "root_cause": "The answer can repeat user contact details.", "suggested_fix": "Enable redact_pii and redact answer text in wrapper."},
+    {"fault_class": "arithmetic_error", "evidence": {"metric": "recomputed total compared with final answer line", "observed": "baseline temperature high and formula absent", "trace_ids": []}, "root_cause": "The model may estimate instead of computing exactly.", "suggested_fix": "Lower temperature, enable verify and specify the formula in prompt."},
+    {"fault_class": "tool_overuse", "evidence": {"metric": "tool_count and repeated_actions", "observed": "no tool budget in baseline", "trace_ids": []}, "root_cause": "The agent can call the same tool more than needed.", "suggested_fix": "Set tool_budget and require each tool at most once."},
+    {"fault_class": "fabrication", "evidence": {"metric": "total produced when product data is unavailable", "observed": "baseline prompt asks for a total without grounding", "trace_ids": []}, "root_cause": "The model may produce a total without valid tool data.", "suggested_fix": "Require tool-grounded answers and no total when unavailable."},
+    {"fault_class": "prompt_injection", "evidence": {"metric": "answer differs from tool-grounded calculation when order notes are present", "observed": "baseline prompt did not separate notes from policy", "trace_ids": []}, "root_cause": "Order notes can be mistaken for operating policy.", "suggested_fix": "Prompt treats notes as data; wrapper removes risky note text before calling the agent."}
   ]
 }
