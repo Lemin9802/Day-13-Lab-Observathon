@@ -1,12 +1,42 @@
 {
-  "team": "TODO-team-name",
+  "team": "Lemin9802",
   "schema_version": 1,
   "findings": [
     {
       "fault_class": "latency_spike",
-      "evidence": {"metric": "latency_p95_ms", "observed": "TODO from your telemetry", "trace_ids": []},
-      "root_cause": "TODO: what config knob or behavior causes it?",
-      "suggested_fix": "TODO: config change and/or wrapper mitigation"
+      "evidence": {"metric": "latency_ms and wall_ms P95", "observed": "high step budget, loop guard off, no cache", "trace_ids": []},
+      "root_cause": "Too many agent steps and repeated calls make the long tail slow.",
+      "suggested_fix": "Use lower max_steps, loop_guard, tool_budget and cache."
+    },
+    {
+      "fault_class": "cost_blowup",
+      "evidence": {"metric": "prompt_tokens, completion_tokens, total_tokens, cost_usd", "observed": "verbose_system true, large context, large completion cap", "trace_ids": []},
+      "root_cause": "Original config spends extra tokens on context and long answers.",
+      "suggested_fix": "Use compact prompt, smaller context, shorter completion cap and cache."
+    },
+    {
+      "fault_class": "pii_leak",
+      "evidence": {"metric": "PII matches in answer text", "observed": "redaction was disabled in baseline", "trace_ids": []},
+      "root_cause": "The answer can repeat user contact details.",
+      "suggested_fix": "Enable redact_pii and redact answer text in wrapper."
+    },
+    {
+      "fault_class": "arithmetic_error",
+      "evidence": {"metric": "recomputed total compared with final answer line", "observed": "baseline temperature high and formula absent", "trace_ids": []},
+      "root_cause": "The model may estimate instead of computing exactly.",
+      "suggested_fix": "Lower temperature, enable verify and specify the formula in prompt."
+    },
+    {
+      "fault_class": "tool_overuse",
+      "evidence": {"metric": "tool_count and repeated_actions", "observed": "no tool budget in baseline", "trace_ids": []},
+      "root_cause": "The agent can call the same tool more than needed.",
+      "suggested_fix": "Set tool_budget and require each tool at most once."
+    },
+    {
+      "fault_class": "fabrication",
+      "evidence": {"metric": "total produced when product data is unavailable", "observed": "baseline prompt asks for a total without grounding", "trace_ids": []},
+      "root_cause": "The model may produce a total without valid tool data.",
+      "suggested_fix": "Require tool-grounded answers and no total when unavailable."
     }
   ]
 }
